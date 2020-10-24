@@ -1,0 +1,52 @@
+﻿@page "/squaregame"
+
+<style type="text/css">
+    td {
+        width: 175px;
+        height: 175px;
+        border-style: dotted;
+        font-size: x-large;
+        text-align: center;
+    }
+</style>
+
+<h3>SquareGame</h3>
+
+<div>
+    <table>
+        @for (int rowIndex = 0; rowIndex < numberoOfRows; rowIndex++)
+        {
+            <tr>
+                @for (int colIndex = 0; colIndex < numberOfColumns; colIndex++)
+                {
+                    int x = rowIndex;
+                    int y = colIndex;
+                    <td @onclick="@(() => PieceClicked(x,y))" class="button"
+                        style="@(currentPlayerColor == playerColor1 ? "border-color='red'" : "border-color='blue'")"></td>
+                }
+            </tr>
+        }
+    </table>
+</div>
+
+@code {
+    private int numberoOfRows = 4;
+    private int numberOfColumns = 3;
+    private bool gameComplete;
+    private string playerColor1 = "red";
+    private string playerColor2 = "blue";
+    private string currentPlayerColor;
+    private bool isCurentPlayerPlayer1 = true;
+
+    private async Task PieceClicked(int rowIndex, int colIndex)
+    {
+        if (gameComplete)
+        {
+            return;
+        }
+
+        currentPlayerColor = isCurentPlayerPlayer1 ? playerColor1 : playerColor2;
+
+        isCurentPlayerPlayer1 = !isCurentPlayerPlayer1;
+    }
+}
