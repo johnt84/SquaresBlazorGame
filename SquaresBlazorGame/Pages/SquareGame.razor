@@ -1,4 +1,4 @@
-﻿@page "/squaregame"
+﻿@page "/squaresgame"
 
 <style type="text/css">
     td {
@@ -8,35 +8,94 @@
         font-size: x-large;
         text-align: center;
     }
+
+    .horizContainer {
+        height: 4px;
+        width: 25px;
+        border: 3px;
+    }
+
+    .vertContainer {
+        height: 25px;
+        width: 4px;
+        border: 2px;
+    }
+
+    .dot {
+        height: 4px;
+        width: 4px;
+        background-color: black;
+    }
+
+    .box{
+        height:25px;
+        width:25px;
+    }
+
+    div{
+        display:block;
+    }
 </style>
 
-<h3>SquareGame</h3>
+<h3>Squares Game</h3>
 
-<div>
-    <table>
-        @for (int rowIndex = 0; rowIndex < numberoOfRows; rowIndex++)
+<div id="game-board">
+    @for (int rowIndex = 0; rowIndex < numberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
+    {
+    <div class="row">
+        @for (int colIndex = 0; colIndex < numberOfColumns; colIndex++)
         {
-            <tr>
-                @for (int colIndex = 0; colIndex < numberOfColumns; colIndex++)
+            int x = rowIndex;
+            int y = colIndex;
+            @if (colIndex % 2 == 0)
+            {
+                if (rowIndex % 2 == 0)
                 {
-                    int x = rowIndex;
-                    int y = colIndex;
-                    <td @onclick="@(() => PieceClicked(x,y))" class="button"
-                        style="@(currentPlayerColor == playerColor1 ? "border-color='red'" : "border-color='blue'")"></td>
+                    <div class="dot" id="0,0"></div>
                 }
-            </tr>
+                else if(rowIndex < numberOfRows - 1)
+                {
+    <div class="vertContainer" data-coord="0,0,0" style="@BoardStyles[x, y]" @onclick="@(() => PieceClicked(x, y))" @onmouseover="@(()=> PieceMouseOver(x, y))" @onmouseout="@(()=> PieceMouseOut(x, y))"></div>
+                }
+            }
+            else
+            {
+                if (rowIndex % 2 == 0)
+                {
+    <div class="horizContainer" data-coord="0,0,0" style="@BoardStyles[x, y]" @onclick="@(() => PieceClicked(x, y))" @onmouseover="@(()=> PieceMouseOver(x, y))" @onmouseout="@(()=> PieceMouseOut(x, y))"></div>
+                }
+                else if (rowIndex < numberOfRows - 1)
+                {
+                    <div class="box" id="box0,0" style="background-color: white;"></div>
+                }
+            }
         }
-    </table>
+    </div>
+    }
 </div>
 
 @code {
-    private int numberoOfRows = 4;
-    private int numberOfColumns = 3;
+    private int numberOfRows = 10;
+    private int numberOfColumns = 8;
     private bool gameComplete;
     private string playerColor1 = "red";
     private string playerColor2 = "blue";
-    private string currentPlayerColor;
-    private bool isCurentPlayerPlayer1 = true;
+    private bool isCurentPlayerPlayer1;
+    private string[,] BoardStyles = new string[10, 8];
+    List<string> playerColors = new List<string>() { "red", "blue" };
+
+    protected override void OnInitialized()
+    {
+        for (int rowIndex = 0; rowIndex < numberOfRows; rowIndex++)
+        {
+            for (int colIndex = 0; colIndex < numberOfColumns; colIndex++)
+            {
+                BoardStyles[rowIndex, colIndex] = "background-color: white";
+            }
+        }
+
+        isCurentPlayerPlayer1 = true;
+    }
 
     private async Task PieceClicked(int rowIndex, int colIndex)
     {
@@ -45,8 +104,57 @@
             return;
         }
 
-        currentPlayerColor = isCurentPlayerPlayer1 ? playerColor1 : playerColor2;
+        string currentPieceColor = BoardStyles[rowIndex, colIndex].Replace("background-color: ", string.Empty);
+
+        bool isPieceAlreadyClicked = playerColors.Contains(currentPieceColor);
+
+        if(isPieceAlreadyClicked)
+        {
+            return;
+        }
+
+        string currentPlayerColor = isCurentPlayerPlayer1 ? playerColor1 : playerColor2;
+
+        BoardStyles[rowIndex, colIndex] = $"background-color: {currentPlayerColor}";
 
         isCurentPlayerPlayer1 = !isCurentPlayerPlayer1;
+    }
+
+    private async Task PieceMouseOver(int rowIndex, int colIndex)
+    {
+        if (gameComplete)
+        {
+            return;
+        }
+
+        string currentPieceColor = BoardStyles[rowIndex, colIndex].Replace("background-color: ", string.Empty);
+
+        bool isPieceAlreadyClicked = playerColors.Contains(currentPieceColor);
+
+        if (isPieceAlreadyClicked)
+        {
+            return;
+        }
+
+        BoardStyles[rowIndex, colIndex] = $"background-color: grey";
+    }
+
+    private async Task PieceMouseOut(int rowIndex, int colIndex)
+    {
+        if (gameComplete)
+        {
+            return;
+        }
+
+        string currentPieceColor = BoardStyles[rowIndex, colIndex].Replace("background-color: ", string.Empty);
+
+        bool isPieceAlreadyClicked = playerColors.Contains(currentPieceColor);
+
+        if (isPieceAlreadyClicked)
+        {
+            return;
+        }
+
+        BoardStyles[rowIndex, colIndex] = $"background-color: white";
     }
 }
