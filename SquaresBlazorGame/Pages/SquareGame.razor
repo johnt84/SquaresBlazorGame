@@ -27,134 +27,227 @@
         background-color: black;
     }
 
-    .box{
-        height:25px;
-        width:25px;
+    .box {
+        height: 25px;
+        width: 25px;
     }
 
-    div{
-        display:block;
+    div {
+        display: block;
     }
 </style>
 
 <h3>Squares Game</h3>
 
 <div id="game-board">
-    @for (int rowIndex = 0; rowIndex < numberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
+    @for (int rowIndex = 0; rowIndex < NUMBER_OF_ROWS; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
     {
-    <div class="row">
-        @for (int colIndex = 0; colIndex < numberOfColumns; colIndex++)
+        int x = rowIndex;
+        <div class="row">
+            @for (int colIndex = 0; colIndex < NUMBER_OF_COLUMNS; colIndex++)
+            {
+                int y = colIndex;
+
+                <div class="dot" id="@DotID(rowIndex,@colIndex)"></div>
+                <div class="horizContainer" data-coord="0,@rowIndex,@colIndex" style="@BoardStyles[HORIZONTAL_NO, x, y]" @onclick="@(() => LineClicked(HORIZONTAL_NO, x, y))" @onmouseover="@(()=> LineMouseOver(HORIZONTAL_NO, x, y))" @onmouseout="@(()=> LineMouseOut(HORIZONTAL_NO, x, y))"></div>
+            }
+        </div>
+        @if (rowIndex < NUMBER_OF_ROWS - 1)
         {
-            int x = rowIndex;
-            int y = colIndex;
-            @if (colIndex % 2 == 0)
-            {
-                if (rowIndex % 2 == 0)
+            <div class="row">
+                @for (int colIndex = 0; colIndex < NUMBER_OF_COLUMNS; colIndex++)
                 {
-                    <div class="dot" id="0,0"></div>
+                    int y = colIndex;
+
+                    <div class="vertContainer" data-coord="1,@rowIndex,@colIndex" style="@BoardStyles[VERTICAL_NO, x, y]" @onclick="@(() => LineClicked(VERTICAL_NO, x, y))" @onmouseover="@(()=> LineMouseOver(VERTICAL_NO, x, y))" @onmouseout="@(()=> LineMouseOut(VERTICAL_NO, x, y))"></div>
+                    <div class="box" id="@BoxID(rowIndex,colIndex)" style="@BoxStyles[x, y]"></div>
                 }
-                else if(rowIndex < numberOfRows - 1)
-                {
-    <div class="vertContainer" data-coord="0,0,0" style="@BoardStyles[x, y]" @onclick="@(() => PieceClicked(x, y))" @onmouseover="@(()=> PieceMouseOver(x, y))" @onmouseout="@(()=> PieceMouseOut(x, y))"></div>
-                }
-            }
-            else
-            {
-                if (rowIndex % 2 == 0)
-                {
-    <div class="horizContainer" data-coord="0,0,0" style="@BoardStyles[x, y]" @onclick="@(() => PieceClicked(x, y))" @onmouseover="@(()=> PieceMouseOver(x, y))" @onmouseout="@(()=> PieceMouseOut(x, y))"></div>
-                }
-                else if (rowIndex < numberOfRows - 1)
-                {
-                    <div class="box" id="box0,0" style="background-color: white;"></div>
-                }
-            }
+            </div>
         }
-    </div>
     }
 </div>
 
 @code {
-    private int numberOfRows = 10;
-    private int numberOfColumns = 8;
-    private bool gameComplete;
-    private string playerColor1 = "red";
-    private string playerColor2 = "blue";
+
     private bool isCurentPlayerPlayer1;
-    private string[,] BoardStyles = new string[10, 8];
-    List<string> playerColors = new List<string>() { "red", "blue" };
+    private string[,,] BoardStyles = new string[2, 5, 4];
+    private string[,] BoxStyles = new string[5, 4];
+    List<string> playerColours = new List<string>() { "red", "blue" };
+    private bool gameComplete;
+
+    private const int NUMBER_OF_DIRECTIONS = 2;
+    private const int NUMBER_OF_ROWS = 5;
+    private const int NUMBER_OF_COLUMNS = 4;
+    private const string PLAYER_COLOUR_1 = "red";
+    private const string PLAYER_COLOUR_2 = "blue";
+    private const string BACKGROUND_COLOUR_STYLE = "background-color: ";
+    private const int HORIZONTAL_NO = 0;
+    private const int VERTICAL_NO = 1;
+    private const string DOT = "dot";
+    private const string BOX = "box";
+
+    private string DotID(int rowIndex, int colIndex) => $"{DOT}{rowIndex},{colIndex}";
+
+    private string BoxID(int rowIndex, int colIndex) => $"{BOX}{rowIndex},{colIndex}";
 
     protected override void OnInitialized()
     {
-        for (int rowIndex = 0; rowIndex < numberOfRows; rowIndex++)
+        for (int directionIndex = 0; directionIndex < NUMBER_OF_DIRECTIONS; directionIndex++)
         {
-            for (int colIndex = 0; colIndex < numberOfColumns; colIndex++)
+            for (int rowIndex = 0; rowIndex < NUMBER_OF_ROWS; rowIndex++)
             {
-                BoardStyles[rowIndex, colIndex] = "background-color: white";
+                for (int colIndex = 0; colIndex < NUMBER_OF_COLUMNS; colIndex++)
+                {
+                    BoardStyles[directionIndex, rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}white;";
+                    BoxStyles[rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}white;";
+                }
             }
         }
 
         isCurentPlayerPlayer1 = true;
     }
 
-    private async Task PieceClicked(int rowIndex, int colIndex)
+    private async Task LineClicked(int directionNo, int rowIndex, int colIndex)
     {
         if (gameComplete)
         {
             return;
         }
 
-        string currentPieceColor = BoardStyles[rowIndex, colIndex].Replace("background-color: ", string.Empty);
-
-        bool isPieceAlreadyClicked = playerColors.Contains(currentPieceColor);
-
-        if(isPieceAlreadyClicked)
+        if (IsLineClicked(directionNo, rowIndex, colIndex))
         {
             return;
         }
 
-        string currentPlayerColor = isCurentPlayerPlayer1 ? playerColor1 : playerColor2;
+        string currentPlayerColour = isCurentPlayerPlayer1 ? PLAYER_COLOUR_1 : PLAYER_COLOUR_2;
 
-        BoardStyles[rowIndex, colIndex] = $"background-color: {currentPlayerColor}";
+        BoardStyles[directionNo, rowIndex, colIndex] = BACKGROUND_COLOUR_STYLE + currentPlayerColour;
 
-        isCurentPlayerPlayer1 = !isCurentPlayerPlayer1;
+        string newSquare = GetNewSquare(directionNo, rowIndex, colIndex);
+
+        if(!string.IsNullOrEmpty(newSquare))
+        {
+            var coordArray = newSquare.Split(",");
+            int boxRowIndex = Convert.ToInt32(coordArray[0]);
+            int boxColIndex = Convert.ToInt32(coordArray[1]);
+            BoxStyles[boxRowIndex, boxColIndex] = BACKGROUND_COLOUR_STYLE + currentPlayerColour;
+        }
+        else
+        {
+            isCurentPlayerPlayer1 = !isCurentPlayerPlayer1;
+        }
     }
 
-    private async Task PieceMouseOver(int rowIndex, int colIndex)
+    private async Task LineMouseOver(int directionNo, int rowIndex, int colIndex)
     {
         if (gameComplete)
         {
             return;
         }
 
-        string currentPieceColor = BoardStyles[rowIndex, colIndex].Replace("background-color: ", string.Empty);
-
-        bool isPieceAlreadyClicked = playerColors.Contains(currentPieceColor);
-
-        if (isPieceAlreadyClicked)
+        if (IsLineClicked(directionNo, rowIndex, colIndex))
         {
             return;
         }
 
-        BoardStyles[rowIndex, colIndex] = $"background-color: grey";
+        BoardStyles[directionNo, rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}grey";
     }
 
-    private async Task PieceMouseOut(int rowIndex, int colIndex)
+    private async Task LineMouseOut(int directionNo, int rowIndex, int colIndex)
     {
         if (gameComplete)
         {
             return;
         }
 
-        string currentPieceColor = BoardStyles[rowIndex, colIndex].Replace("background-color: ", string.Empty);
+        string currentPieceColor = BoardStyles[directionNo, rowIndex, colIndex].Replace(BACKGROUND_COLOUR_STYLE, string.Empty);
 
-        bool isPieceAlreadyClicked = playerColors.Contains(currentPieceColor);
-
-        if (isPieceAlreadyClicked)
+        if (IsLineClicked(directionNo, rowIndex, colIndex))
         {
             return;
         }
 
-        BoardStyles[rowIndex, colIndex] = $"background-color: white";
+        BoardStyles[directionNo, rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}white";
+    }
+
+    private string GetNewSquare(int directionNo, int rowIndex, int colIndex)
+    {
+        string newBox = string.Empty;
+
+        bool isLineAboveDrawn = false;
+        bool isLineBelowDrawn = false;
+        bool isLineToTheLeftDrawn = false;
+        bool isLineToTheRightDrawn = false;
+
+        if(directionNo == HORIZONTAL_NO)
+        {
+            isLineAboveDrawn = rowIndex > 0 ? IsLineClicked(HORIZONTAL_NO, rowIndex - 1, colIndex) : false;
+            isLineBelowDrawn = rowIndex < NUMBER_OF_ROWS - 1 ? IsLineClicked(HORIZONTAL_NO, rowIndex + 1, colIndex) : false;
+
+            if(isLineAboveDrawn)
+            {
+                isLineToTheLeftDrawn = IsLineClicked(VERTICAL_NO, rowIndex - 1, colIndex);
+                isLineToTheRightDrawn = colIndex < NUMBER_OF_COLUMNS - 1 ? IsLineClicked(VERTICAL_NO, rowIndex - 1, colIndex + 1) : false;
+            }
+            else if (isLineBelowDrawn)
+            {
+                isLineToTheLeftDrawn = IsLineClicked(VERTICAL_NO, rowIndex, colIndex);
+                isLineToTheRightDrawn = colIndex < NUMBER_OF_COLUMNS - 1 ? IsLineClicked(VERTICAL_NO, rowIndex, colIndex + 1) : false;
+            }
+        }
+        else
+        {
+            isLineToTheLeftDrawn = colIndex > 0 ? IsLineClicked(VERTICAL_NO, rowIndex, colIndex - 1) : false;
+            isLineToTheRightDrawn = colIndex < NUMBER_OF_COLUMNS - 1 ? IsLineClicked(VERTICAL_NO, rowIndex, colIndex + 1) : false;
+
+            if (isLineToTheLeftDrawn)
+            {
+                isLineAboveDrawn = IsLineClicked(HORIZONTAL_NO, rowIndex, colIndex - 1);
+                isLineBelowDrawn = rowIndex < NUMBER_OF_ROWS - 1 ? IsLineClicked(HORIZONTAL_NO, rowIndex + 1, colIndex - 1) : false;
+            }
+            else if (isLineToTheRightDrawn)
+            {
+                isLineAboveDrawn = IsLineClicked(HORIZONTAL_NO, rowIndex, colIndex);
+                isLineBelowDrawn = rowIndex < NUMBER_OF_ROWS - 1 ? IsLineClicked(HORIZONTAL_NO, rowIndex + 1, colIndex) : false;
+            }
+        }
+
+
+        var adjacentDrawnLines = new List<bool> { isLineAboveDrawn, isLineBelowDrawn, isLineToTheLeftDrawn, isLineToTheRightDrawn };
+
+        if (adjacentDrawnLines.Where(x => x).Count() == 3)
+        {
+            if (directionNo == HORIZONTAL_NO)
+            {
+                if (isLineAboveDrawn)
+                {
+                    newBox = $"{rowIndex - 1},{colIndex}";
+                }
+                else if (isLineBelowDrawn)
+                {
+                    newBox = $"{rowIndex},{colIndex}";
+                }
+            }
+            else
+            {
+                if (isLineToTheLeftDrawn)
+                {
+                    newBox = $"{rowIndex},{colIndex - 1}";
+                }
+                else if (isLineToTheRightDrawn)
+                {
+                    newBox = $"{rowIndex},{colIndex}";
+                }
+            }
+        }
+
+        return newBox;
+    }
+
+    private bool IsLineClicked(int directionNo, int rowIndex, int colIndex)
+    {
+        string currentPieceColour = BoardStyles[directionNo, rowIndex, colIndex].Replace(BACKGROUND_COLOUR_STYLE, string.Empty);
+
+        return playerColours.Contains(currentPieceColour);
     }
 }
