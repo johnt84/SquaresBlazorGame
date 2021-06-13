@@ -1,5 +1,8 @@
 ﻿@page "/squaresgame"
 
+@using SquaresBlazorGame.Data;
+@using SquaresBlazorGame.Models;
+
 <style type="text/css">
     td {
         width: 175px;
@@ -40,27 +43,26 @@
 <h3>Squares Game</h3>
 
 <div id="game-board">
-    @for (int rowIndex = 0; rowIndex < NUMBER_OF_ROWS; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
+    @if (gameBoard != null)
     {
-        int x = rowIndex;
-        <div class="row">
-            @for (int colIndex = 0; colIndex < NUMBER_OF_COLUMNS; colIndex++)
-            {
-                int y = colIndex;
+        <button id="btnNewGame" class="btnNewGame" @onclick="NewGame">New Game</button><br /><br />
 
-                <div class="dot" id="@DotID(rowIndex,@colIndex)"></div>
-                <div class="horizContainer" data-coord="0,@rowIndex,@colIndex" style="@BoardStyles[HORIZONTAL_NO, x, y]" @onclick="@(() => LineClicked(HORIZONTAL_NO, x, y))" @onmouseover="@(()=> LineMouseOver(HORIZONTAL_NO, x, y))" @onmouseout="@(()=> LineMouseOut(HORIZONTAL_NO, x, y))"></div>
-            }
-        </div>
-        @if (rowIndex < NUMBER_OF_ROWS - 1)
+        foreach (var row in gameBoard.Rows)
         {
             <div class="row">
-                @for (int colIndex = 0; colIndex < NUMBER_OF_COLUMNS; colIndex++)
+                @foreach (var box in row.Boxes)
                 {
-                    int y = colIndex;
+                    <div class="dot" id="@DotID(box.RowNumber,box.ColNumber)"></div>
+                    <div class="horizContainer" data-coord="HORIZONTAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.TopLine.GameColour;" @onclick="@(() => LineClicked(box.TopLine))" @onmouseover="@(()=> LineMouseAction(box.TopLine, true))" @onmouseout="@(()=> LineMouseAction(box.TopLine, false))"></div>
 
-                    <div class="vertContainer" data-coord="1,@rowIndex,@colIndex" style="@BoardStyles[VERTICAL_NO, x, y]" @onclick="@(() => LineClicked(VERTICAL_NO, x, y))" @onmouseover="@(()=> LineMouseOver(VERTICAL_NO, x, y))" @onmouseout="@(()=> LineMouseOut(VERTICAL_NO, x, y))"></div>
-                    <div class="box" id="@BoxID(rowIndex,colIndex)" style="@BoxStyles[x, y]"></div>
+                    <div class="vertContainer" data-coord="VERTICAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.LeftLine.GameColour;" @onclick="@(() => LineClicked(box.LeftLine))" @onmouseover="@(()=> LineMouseAction(box.LeftLine, true))" @onmouseout="@(()=> LineMouseAction(box.LeftLine, false))"></div>
+                    <div class="box" id="@BoxID(box.RowNumber,@box.ColNumber)" style="background-color: @box.LeftLine.GameColour;"></div>
+
+                    @*<div class="dot" id="@DotID(row.RowNumber,box.BoxNumber)"></div>
+                    <div class="horizContainer" data-coord="HORIZONTAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.BottomLine.GameColour;" @onclick="@(() => LineClicked(box.BottomLine))" @onmouseover="@(()=> LineMouseOver(box.BottomLine))" @onmouseout="@(()=> LineMouseOut(box.BottomLine))"></div>
+
+                    <div class="vertContainer" data-coord="VERTICAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.RightLine.GameColour;" @onclick="@(() => LineClicked(box.RightLine))" @onmouseover="@(()=> LineMouseOver(box.RightLine))" @onmouseout="@(()=> LineMouseOut(box.RightLine))"></div>
+                    <div class="box" id="@BoxID(box.RowNumber,box.ColNumber)" style="background-color: @BoxStyles[box.RowNumber, box.ColNumber];"></div>*@
                 }
             </div>
         }
@@ -69,185 +71,39 @@
 
 @code {
 
-    private bool isCurentPlayerPlayer1;
-    private string[,,] BoardStyles = new string[2, 5, 4];
-    private string[,] BoxStyles = new string[5, 4];
-    List<string> playerColours = new List<string>() { "red", "blue" };
-    private bool gameComplete;
+    private GameBoard gameBoard;
 
-    private const int NUMBER_OF_DIRECTIONS = 2;
-    private const int NUMBER_OF_ROWS = 5;
-    private const int NUMBER_OF_COLUMNS = 4;
-    private const string PLAYER_COLOUR_1 = "red";
-    private const string PLAYER_COLOUR_2 = "blue";
-    private const string BACKGROUND_COLOUR_STYLE = "background-color: ";
-    private const int HORIZONTAL_NO = 0;
-    private const int VERTICAL_NO = 1;
-    private const string DOT = "dot";
-    private const string BOX = "box";
+    private string DotID(int rowIndex, int colIndex) => $"{Enums.Shape.Dot}{rowIndex},{colIndex}";
 
-    private string DotID(int rowIndex, int colIndex) => $"{DOT}{rowIndex},{colIndex}";
-
-    private string BoxID(int rowIndex, int colIndex) => $"{BOX}{rowIndex},{colIndex}";
+    private string BoxID(int rowIndex, int colIndex) => $"{Enums.Shape.Box}{rowIndex},{colIndex}";
 
     protected override void OnInitialized()
     {
-        for (int directionIndex = 0; directionIndex < NUMBER_OF_DIRECTIONS; directionIndex++)
-        {
-            for (int rowIndex = 0; rowIndex < NUMBER_OF_ROWS; rowIndex++)
-            {
-                for (int colIndex = 0; colIndex < NUMBER_OF_COLUMNS; colIndex++)
-                {
-                    BoardStyles[directionIndex, rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}white;";
-                    BoxStyles[rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}white;";
-                }
-            }
-        }
-
-        isCurentPlayerPlayer1 = true;
+        gameBoard = new GameBoard();
     }
 
-    private async Task LineClicked(int directionNo, int rowIndex, int colIndex)
+    private void LineClicked(Line line)
     {
-        if (gameComplete)
-        {
-            return;
-        }
-
-        if (IsLineClicked(directionNo, rowIndex, colIndex))
-        {
-            return;
-        }
-
-        string currentPlayerColour = isCurentPlayerPlayer1 ? PLAYER_COLOUR_1 : PLAYER_COLOUR_2;
-
-        BoardStyles[directionNo, rowIndex, colIndex] = BACKGROUND_COLOUR_STYLE + currentPlayerColour;
-
-        string newSquare = GetNewSquare(directionNo, rowIndex, colIndex);
-
-        if(!string.IsNullOrEmpty(newSquare))
-        {
-            var coordArray = newSquare.Split(",");
-            int boxRowIndex = Convert.ToInt32(coordArray[0]);
-            int boxColIndex = Convert.ToInt32(coordArray[1]);
-            BoxStyles[boxRowIndex, boxColIndex] = BACKGROUND_COLOUR_STYLE + currentPlayerColour;
-        }
-        else
-        {
-            isCurentPlayerPlayer1 = !isCurentPlayerPlayer1;
-        }
+        gameBoard.DrawLine(line);
     }
 
-    private async Task LineMouseOver(int directionNo, int rowIndex, int colIndex)
+    private void LineMouseAction(Line line, bool mouseOver)
     {
-        if (gameComplete)
+        if (gameBoard == null || gameBoard.GameComplete)
         {
             return;
         }
 
-        if (IsLineClicked(directionNo, rowIndex, colIndex))
+        if (line.LineClicked)
         {
             return;
         }
 
-        BoardStyles[directionNo, rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}grey";
+        line.GameColour = mouseOver ? Enums.GameColour.Grey : Enums.GameColour.White;
     }
 
-    private async Task LineMouseOut(int directionNo, int rowIndex, int colIndex)
+    private void NewGame()
     {
-        if (gameComplete)
-        {
-            return;
-        }
-
-        string currentPieceColor = BoardStyles[directionNo, rowIndex, colIndex].Replace(BACKGROUND_COLOUR_STYLE, string.Empty);
-
-        if (IsLineClicked(directionNo, rowIndex, colIndex))
-        {
-            return;
-        }
-
-        BoardStyles[directionNo, rowIndex, colIndex] = $"{BACKGROUND_COLOUR_STYLE}white";
-    }
-
-    private string GetNewSquare(int directionNo, int rowIndex, int colIndex)
-    {
-        string newBox = string.Empty;
-
-        bool isLineAboveDrawn = false;
-        bool isLineBelowDrawn = false;
-        bool isLineToTheLeftDrawn = false;
-        bool isLineToTheRightDrawn = false;
-
-        if(directionNo == HORIZONTAL_NO)
-        {
-            isLineAboveDrawn = rowIndex > 0 ? IsLineClicked(HORIZONTAL_NO, rowIndex - 1, colIndex) : false;
-            isLineBelowDrawn = rowIndex < NUMBER_OF_ROWS - 1 ? IsLineClicked(HORIZONTAL_NO, rowIndex + 1, colIndex) : false;
-
-            if(isLineAboveDrawn)
-            {
-                isLineToTheLeftDrawn = IsLineClicked(VERTICAL_NO, rowIndex - 1, colIndex);
-                isLineToTheRightDrawn = colIndex < NUMBER_OF_COLUMNS - 1 ? IsLineClicked(VERTICAL_NO, rowIndex - 1, colIndex + 1) : false;
-            }
-            else if (isLineBelowDrawn)
-            {
-                isLineToTheLeftDrawn = IsLineClicked(VERTICAL_NO, rowIndex, colIndex);
-                isLineToTheRightDrawn = colIndex < NUMBER_OF_COLUMNS - 1 ? IsLineClicked(VERTICAL_NO, rowIndex, colIndex + 1) : false;
-            }
-        }
-        else
-        {
-            isLineToTheLeftDrawn = colIndex > 0 ? IsLineClicked(VERTICAL_NO, rowIndex, colIndex - 1) : false;
-            isLineToTheRightDrawn = colIndex < NUMBER_OF_COLUMNS - 1 ? IsLineClicked(VERTICAL_NO, rowIndex, colIndex + 1) : false;
-
-            if (isLineToTheLeftDrawn)
-            {
-                isLineAboveDrawn = IsLineClicked(HORIZONTAL_NO, rowIndex, colIndex - 1);
-                isLineBelowDrawn = rowIndex < NUMBER_OF_ROWS - 1 ? IsLineClicked(HORIZONTAL_NO, rowIndex + 1, colIndex - 1) : false;
-            }
-            else if (isLineToTheRightDrawn)
-            {
-                isLineAboveDrawn = IsLineClicked(HORIZONTAL_NO, rowIndex, colIndex);
-                isLineBelowDrawn = rowIndex < NUMBER_OF_ROWS - 1 ? IsLineClicked(HORIZONTAL_NO, rowIndex + 1, colIndex) : false;
-            }
-        }
-
-
-        var adjacentDrawnLines = new List<bool> { isLineAboveDrawn, isLineBelowDrawn, isLineToTheLeftDrawn, isLineToTheRightDrawn };
-
-        if (adjacentDrawnLines.Where(x => x).Count() == 3)
-        {
-            if (directionNo == HORIZONTAL_NO)
-            {
-                if (isLineAboveDrawn)
-                {
-                    newBox = $"{rowIndex - 1},{colIndex}";
-                }
-                else if (isLineBelowDrawn)
-                {
-                    newBox = $"{rowIndex},{colIndex}";
-                }
-            }
-            else
-            {
-                if (isLineToTheLeftDrawn)
-                {
-                    newBox = $"{rowIndex},{colIndex - 1}";
-                }
-                else if (isLineToTheRightDrawn)
-                {
-                    newBox = $"{rowIndex},{colIndex}";
-                }
-            }
-        }
-
-        return newBox;
-    }
-
-    private bool IsLineClicked(int directionNo, int rowIndex, int colIndex)
-    {
-        string currentPieceColour = BoardStyles[directionNo, rowIndex, colIndex].Replace(BACKGROUND_COLOUR_STYLE, string.Empty);
-
-        return playerColours.Contains(currentPieceColour);
+        gameBoard.ResetGame();
     }
 }
