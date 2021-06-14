@@ -107,7 +107,7 @@ namespace SquaresBlazorGame.Data
 
             var boxes = Rows.Select(x => x.Boxes).ToList();
 
-            List<Box> allBoxes = null;
+            var allBoxes = new List<Box>();
 
             foreach(var box in boxes)
             {
