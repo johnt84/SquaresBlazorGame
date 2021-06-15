@@ -4,12 +4,17 @@
 @using SquaresBlazorGame.Models;
 
 <style type="text/css">
-    td {
+/*    td {
         width: 175px;
         height: 175px;
         border-style: dotted;
         font-size: x-large;
         text-align: center;
+    }
+*/
+    .row {
+        display: flex;
+        margin-left: 15px;
     }
 
     .horizContainer {
@@ -45,26 +50,56 @@
 <div id="game-board">
     @if (gameBoard != null)
     {
-        <button id="btnNewGame" class="btnNewGame" @onclick="NewGame">New Game</button><br /><br />
+        <div style="font-size: 13px; width: 90px; height: 5px; margin-bottom: 35px;">
+            <button id="btnNewGame" class="btnNewGame" @onclick="NewGame">New Game</button>
+        </div>
 
-        foreach (var row in gameBoard.Rows)
+        <div style="font-size:14px; margin-bottom:10px;">
+            <span>@gameBoard.GameStatusForDisplay</span>
+        </div>
+
+        @if (gameBoard.GameStatus == Enums.GameStatus.Game_Over)
         {
+            <div style="font-size:14px; margin-bottom:25px;">
+                <span>@gameBoard.GameResultForDisplay</span>
+            </div>
+        }
+
+        <div style="font-size:13px; margin-bottom:25px;">
+            Player 1: <span>@gameBoard.Player1BoxesFilled</span> V
+            Player 2: <span>@gameBoard.Player2BoxesFilled</span>
+        </div>
+
+        @for (int rowIndex = 0; rowIndex < gameBoard.Game.NumberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
+        {
+            int x = rowIndex;
             <div class="row">
-                @foreach (var box in row.Boxes)
+                @for (int colIndex = 0; colIndex < gameBoard.Game.NumberOfColumns; colIndex++)
                 {
-                    <div class="dot" id="@DotID(box.RowNumber,box.ColNumber)"></div>
-                    <div class="horizContainer" data-coord="HORIZONTAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.TopLine.GameColour;" @onclick="@(() => LineClicked(box.TopLine))" @onmouseover="@(()=> LineMouseAction(box.TopLine, true))" @onmouseout="@(()=> LineMouseAction(box.TopLine, false))"></div>
+                    int y = colIndex;
 
-                    <div class="vertContainer" data-coord="VERTICAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.LeftLine.GameColour;" @onclick="@(() => LineClicked(box.LeftLine))" @onmouseover="@(()=> LineMouseAction(box.LeftLine, true))" @onmouseout="@(()=> LineMouseAction(box.LeftLine, false))"></div>
-                    <div class="box" id="@BoxID(box.RowNumber,@box.ColNumber)" style="background-color: @box.LeftLine.GameColour;"></div>
-
-                    @*<div class="dot" id="@DotID(row.RowNumber,box.BoxNumber)"></div>
-                    <div class="horizContainer" data-coord="HORIZONTAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.BottomLine.GameColour;" @onclick="@(() => LineClicked(box.BottomLine))" @onmouseover="@(()=> LineMouseOver(box.BottomLine))" @onmouseout="@(()=> LineMouseOut(box.BottomLine))"></div>
-
-                    <div class="vertContainer" data-coord="VERTICAL_NO,@box.RowNumber,@box.ColNumber" style="background-color: @box.RightLine.GameColour;" @onclick="@(() => LineClicked(box.RightLine))" @onmouseover="@(()=> LineMouseOver(box.RightLine))" @onmouseout="@(()=> LineMouseOut(box.RightLine))"></div>
-                    <div class="box" id="@BoxID(box.RowNumber,box.ColNumber)" style="background-color: @BoxStyles[box.RowNumber, box.ColNumber];"></div>*@
+                    <div class="dot" id="@DotID(x, y)"></div>
+                    @if (colIndex < gameBoard.Game.NumberOfColumns - 1)
+                    {
+                        <div class="horizContainer" data-coord="0,@x,@y" style="background-color: @gameBoard.Lines[0, x, y].GameColour" @onclick="@(() => LineClicked(gameBoard.Lines[0, x, y]))" @onmouseover="@(() => LineMouseAction(gameBoard.Lines[0, x, y], true))" @onmouseout="@(() => LineMouseAction(gameBoard.Lines[0, x, y], false))"></div>
+                    }
                 }
             </div>
+            @if (rowIndex < gameBoard.Game.NumberOfRows - 1)
+            {
+                <div class="row">
+                    @for (int colIndex = 0; colIndex < gameBoard.Game.NumberOfColumns; colIndex++)
+                    {
+                        int y = colIndex;
+
+                        <div class="vertContainer" data-coord="1,@x,@y" style="background-color: @gameBoard.Lines[1, x, y].GameColour" @onclick="@(() => LineClicked(gameBoard.Lines[1, x, y]))" @onmouseover="@(() => LineMouseAction(gameBoard.Lines[1, x, y], true))" @onmouseout="@(() => LineMouseAction(gameBoard.Lines[1, x, y], false))"></div>
+                        @if (colIndex < gameBoard.Game.NumberOfColumns - 1)
+                        {
+                            <div class="box" id="@BoxID(gameBoard.GetBoxNumber(x, y), x, y)" style="background-color: @gameBoard.GetBoxColour(x, y)"></div>
+                        }
+                    }
+                </div>
+            }
         }
     }
 </div>
@@ -75,7 +110,7 @@
 
     private string DotID(int rowIndex, int colIndex) => $"{Enums.Shape.Dot}{rowIndex},{colIndex}";
 
-    private string BoxID(int rowIndex, int colIndex) => $"{Enums.Shape.Box}{rowIndex},{colIndex}";
+    private string BoxID(int boxNumber, int rowIndex, int colIndex) => $"{Enums.Shape.Box}{boxNumber},{rowIndex},{colIndex}";
 
     protected override void OnInitialized()
     {

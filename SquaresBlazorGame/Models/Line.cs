@@ -4,20 +4,18 @@ namespace SquaresBlazorGame.Models
 {
     public class Line
     {
-        public int LineNumber { get; set; }
         public bool LineClicked { get; set; } = false;
         public LineDirection LineDirection { get; set; }
-        public LineType LineType { get; set; }
         public GameColour GameColour { get; set; }
+        public int RowIndex { get; set; }
+        public int ColIndex { get; set; }
 
-        public int BoxNumber { get; set; }
-
-        public Line(LineDirection lineDirection, LineType lineType, GameColour gameColour, int boxNumber)
+        public Line(LineDirection lineDirection, GameColour gameColour, int rowIndex, int colIndex)
         {
             LineDirection = lineDirection;
-            LineType = lineType;
             GameColour = gameColour;
-            BoxNumber = boxNumber;
+            RowIndex = rowIndex;
+            ColIndex = colIndex;
         }
     }
 }

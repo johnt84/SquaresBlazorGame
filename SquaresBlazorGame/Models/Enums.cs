@@ -14,20 +14,6 @@
             Vertical,
         }
 
-        public enum LineType
-        {
-            TopLine,
-            LeftLine,
-            BottomLine,
-            RightLine,
-        }
-
-        public enum PlayerColour
-        {
-            Red,
-            Blue,
-        }
-
         public enum GameColour
         {
             Red,
@@ -40,6 +26,19 @@
         {
             Player1,
             Player2,
+        }
+
+        public enum GameStatus
+        {
+            In_Progress,
+            Game_Over,
+        }
+
+        public enum GameResult
+        {
+            Player_1_Wins,
+            Player_2_Wins,
+            Draw,
         }
     }
 }

@@ -11,9 +11,21 @@ namespace SquaresBlazorGame.Data
         public string[,,] BoardStyles;
         public string[,] BoxStyles;
         public Player CurrentPlayer;
-        public List<Row> Rows;
-        public List<Line> Lines;
+        public Line[,,] Lines;
         public bool GameComplete;
+        public List<Box> Boxes;
+        public Enums.GameStatus GameStatus;
+        public int Player1BoxesFilled;
+        public int Player2BoxesFilled;
+        public GameResult GameResult;
+
+        public string GameStatusForDisplay => GameStatus.ToString().Replace("_", " ");
+        public string GameResultForDisplay => GameResult.ToString().Replace("_", " ");
+        private Box GetBox(int rowIndex, int colIndex) => Boxes
+                                                            .Where(x => x.RowIndex == rowIndex && x.ColIndex == colIndex)
+                                                            .FirstOrDefault();
+
+        private bool BoxCompleted;
 
         public GameBoard()
         {
@@ -25,30 +37,35 @@ namespace SquaresBlazorGame.Data
             BoardStyles = new string[Game.NumberOfLineDirections, Game.NumberOfRows, Game.NumberOfColumns];
             BoxStyles = new string[Game.NumberOfRows, Game.NumberOfColumns];
 
-            Rows = new List<Row>();
-            Lines = new List<Line>();
+            Lines = new Line[2, Game.NumberOfRows, Game.NumberOfColumns];
+            Boxes = new List<Box>();
 
             int boxIndex = 0;
 
-            for (int rowIndex = 0; rowIndex < Game.NumberOfRows - 1; rowIndex++)
+            for (int rowIndex = 0; rowIndex < Game.NumberOfRows; rowIndex++)
             {
-                var rowBoxes = new List<Box>();
-
-                for (int colIndex = 0; colIndex < Game.NumberOfColumns - 1; colIndex++)
+                for (int colIndex = 0; colIndex < Game.NumberOfColumns; colIndex++)
                 {
-                    var box = new Box(boxIndex, GameColour.White, rowIndex, colIndex);
+                    Lines[0, rowIndex, colIndex] = new Line(LineDirection.Horizontal, GameColour.White, rowIndex, colIndex);
+                    Lines[1, rowIndex, colIndex] = new Line(LineDirection.Vertical, GameColour.White, rowIndex, colIndex);
 
-                    rowBoxes.Add(box);
+                    if(rowIndex < Game.NumberOfRows -1 && colIndex < Game.NumberOfColumns - 1)
+                    {
+                        var box = new Box(boxIndex, GameColour.White, rowIndex, colIndex);
 
-                    boxIndex++;
+                        Boxes.Add(box);
+
+                        boxIndex++;
+                    }
                 }
-
-                var row = new Row(rowIndex, rowBoxes);
-
-                Rows.Add(row);
             }
 
             CurrentPlayer = Player.Player1;
+            GameStatus = GameStatus.In_Progress;
+            GameComplete = false;
+            BoxCompleted = false;
+            Player1BoxesFilled = 0;
+            Player2BoxesFilled = 0;
         }
 
         public void DrawLine(Line line)
@@ -57,68 +74,150 @@ namespace SquaresBlazorGame.Data
             {
                 return;
             }
+
+            if(BoxCompleted)
+            {
+                BoxCompleted = false;
+            }
             
             line.GameColour = CurrentPlayer == Player.Player1 ? GameColour.Red : GameColour.Blue;
             line.LineClicked = true;
 
-            CurrentPlayer = CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
+            var possibleBoxes = new List<Box>();
 
-            var currentRow = Rows.Select(x => x.Boxes.Where(y => y.BoxNumber == line.BoxNumber)).FirstOrDefault();
-
-            if (currentRow == null)
+            foreach (var box in Boxes)
             {
-                return;
-            }
-
-            var currentBox = currentRow.Where(x => x.BoxNumber == line.BoxNumber).FirstOrDefault();
-
-            if (currentBox == null)
-            {
-                return;
-            }
-
-            switch (line.LineType)
-            {
-                case LineType.TopLine:
-                    currentBox.TopLine = line;
-                    break;
-                case LineType.LeftLine:
-                    currentBox.LeftLine = line;
-                    break;
-                case LineType.BottomLine:
-                    currentBox.BottomLine = line;
-                    break;
-                case LineType.RightLine:
-                    currentBox.RightLine = line;
-                    break;
-                default:
-                    break;
-            }
-
-            currentBox.BoxFilled = currentBox.TopLine.LineClicked
-                                        && currentBox.LeftLine.LineClicked
-                                        && currentBox.BottomLine.LineClicked
-                                        && currentBox.RightLine.LineClicked;
-
-            if (currentBox.BoxFilled)
-            {
-                currentBox.PlayerColour = line.GameColour;
-            }
-
-            var boxes = Rows.Select(x => x.Boxes).ToList();
-
-            var allBoxes = new List<Box>();
-
-            foreach(var box in boxes)
-            {
-                foreach(var box2 in box)
+                if (line.LineDirection == LineDirection.Horizontal)
                 {
-                    allBoxes.Add(box2);
+                    bool topLine = line.RowIndex == 0;
+
+                    bool isBottomLine = line.RowIndex == Game.NumberOfRows - 1;
+                    bool bottomRowMatches = isBottomLine && box.RowIndex == line.RowIndex - 1;
+
+                    bool topOrBottomLine = topLine || isBottomLine;
+
+                    bool nonBottomRowMatch = box.RowIndex == line.RowIndex
+                                                    || (!topOrBottomLine && box.RowIndex == line.RowIndex - 1);
+
+                    bool rowMatches = bottomRowMatches || nonBottomRowMatch;
+
+                    bool colMatches = box.ColIndex == line.ColIndex;
+
+                    if (rowMatches && colMatches)
+                    {
+                        possibleBoxes.Add(box);
+                    }
+                }
+                else
+                {
+                    bool rowMatches = box.RowIndex == line.RowIndex;
+                    bool colMatches = box.ColIndex == line.ColIndex
+                                                        || (box.ColIndex == line.ColIndex - 1);
+
+                    if (rowMatches && colMatches)
+                    {
+                        possibleBoxes.Add(box);
+                    }
                 }
             }
 
-            GameComplete = allBoxes.All(x => x.BoxFilled);
+            if (possibleBoxes == null)
+            {
+                return;
+            }
+
+            foreach(var possibleBox in possibleBoxes)
+            {
+                bool isBottomRowBox = possibleBox.RowIndex == Game.NumberOfRows - 1;
+
+                if (line.LineDirection == LineDirection.Horizontal)
+                {
+                    if (possibleBox.RowIndex == line.RowIndex)
+                    {
+                        possibleBox.TopLineClicked = true;
+                    }
+                    else
+                    {
+                        possibleBox.BottomLineClicked = true;
+                    }
+                }
+                else
+                {
+                    if (possibleBox.ColIndex == line.ColIndex)
+                    {
+                        possibleBox.LeftLineClicked = true;
+                    }
+                    else
+                    {
+                        possibleBox.RightLineClicked = true;
+                    }
+                }
+
+                possibleBox.BoxFilled = possibleBox.TopLineClicked
+                                            && possibleBox.LeftLineClicked
+                                            && possibleBox.BottomLineClicked
+                                            && possibleBox.RightLineClicked;
+
+                if (possibleBox.BoxFilled)
+                {
+                    possibleBox.PlayerColour = line.GameColour;
+                    BoxCompleted = true;
+
+                    if(CurrentPlayer == Player.Player1)
+                    {
+                        Player1BoxesFilled++;
+                    }
+                    else
+                    {
+                        Player2BoxesFilled++;
+                    }
+                }
+
+                int possibleBoxIndex = Boxes.IndexOf(possibleBox);
+                Boxes[possibleBoxIndex] = possibleBox;
+            }
+
+            GameComplete = Boxes.All(x => x.BoxFilled);
+
+            if(GameComplete)
+            {
+                GameStatus = GameStatus.Game_Over;
+
+                if(Player1BoxesFilled > Player2BoxesFilled)
+                {
+                    GameResult = GameResult.Player_1_Wins;
+                }
+                else if (Player2BoxesFilled > Player1BoxesFilled)
+                {
+                    GameResult = GameResult.Player_2_Wins;
+                }
+                else
+                {
+                    GameResult = GameResult.Draw;
+                }
+            }
+            else if(!BoxCompleted)
+            {
+                CurrentPlayer = CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
+            }
         }
 
+        public string GetBoxColour(int rowIndex, int colIndex)
+        {
+            var box = GetBox(rowIndex, colIndex);
+
+            return box != null 
+                                ? box.PlayerColour.ToString() 
+                                : GameColour.White.ToString();
+        }
+
+        public int GetBoxNumber(int rowIndex, int colIndex)
+        {
+            var box = GetBox(rowIndex, colIndex);
+
+            return box != null
+                                ? box.BoxNumber
+                                : 0;
+        }
     }
 }
