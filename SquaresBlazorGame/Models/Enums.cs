@@ -39,6 +39,8 @@
             Player_1_Wins,
             Player_2_Wins,
             Draw,
+            Congratulations_you_win,
+            Unlucky_the_computer_wins
         }
     }
 }

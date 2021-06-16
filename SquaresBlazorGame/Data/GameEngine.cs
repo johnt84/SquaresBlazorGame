@@ -336,11 +336,15 @@ namespace SquaresBlazorGame.Data
         {
             if (GameBoard.Player1BoxesFilled > GameBoard.Player2BoxesFilled)
             {
-                GameBoard.GameResult = GameResult.Player_1_Wins;
+                GameBoard.GameResult = GameBoard.Player2IsComputerPlayer
+                                        ? GameResult.Congratulations_you_win
+                                        : GameResult.Player_1_Wins;
             }
             else if (GameBoard.Player2BoxesFilled > GameBoard.Player1BoxesFilled)
             {
-                GameBoard.GameResult = GameResult.Player_2_Wins;
+                GameBoard.GameResult = GameBoard.Player2IsComputerPlayer
+                                        ? GameResult.Unlucky_the_computer_wins
+                                        : GameResult.Player_2_Wins;
             }
             else
             {
