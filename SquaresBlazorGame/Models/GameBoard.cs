@@ -18,5 +18,7 @@ namespace SquaresBlazorGame.Models
         public bool ComputerBoxCompleted { get; set; }
         public Player Player1Name { get; set; }
         public Player Player2Name { get; set; }
+        public GameColour Player1Colour { get; set; }
+        public GameColour Player2Colour { get; set; }
     }
 }

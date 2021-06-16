@@ -58,8 +58,8 @@
         }
 
         <div style="font-size: 26px;margin-bottom:25px;">
-            @gameEngine.Player1NameForDisplay: <span>@gameEngine.GameBoard.Player1BoxesFilled</span> V
-            @gameEngine.Player2NameForDisplay: <span>@gameEngine.GameBoard.Player2BoxesFilled</span>
+            <span style="color:white; background-color:@gameEngine.Player1ColourForDisplay">@gameEngine.Player1NameForDisplay</span><span style="padding-left: 10px; padding-right:10px">@gameEngine.GameBoard.Player1BoxesFilled</span><span>-</span>
+            <span style="padding-right:10px; width: 76px;">@gameEngine.GameBoard.Player2BoxesFilled</span><span style="color: white; background-color: @gameEngine.Player2ColourForDisplay">@gameEngine.Player2NameForDisplay</span>
         </div>
 
         @for (int rowIndex = 0; rowIndex < gameEngine.GameBoard.Game.NumberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
