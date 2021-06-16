@@ -24,8 +24,10 @@
 
         public enum Player
         {
-            Player1,
-            Player2,
+            Player_1,
+            Player_2,
+            Player,
+            Computer,
         }
 
         public enum GameStatus

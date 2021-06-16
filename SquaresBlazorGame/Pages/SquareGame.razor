@@ -37,29 +37,29 @@
     }
 </style>
 
-<h3>Squares Game</h3>
+<h1 style="padding-bottom: 17px;">Squares Game</h1>
 
 <div id="game-board">
     @if (gameEngine.GameBoard != null)
     {
-        <div style="font-size: 13px; width: 90px; height: 5px; margin-bottom: 35px;">
+        <div style="font-size: 18px; width: 103px; width: 110px; margin-bottom: 18px;">
             <button id="btnNewGame" class="btnNewGame" @onclick="NewGame">New Game</button>
         </div>
 
-        <div style="font-size:14px; margin-bottom:10px;">
+        <div style="font-size:28px; margin-bottom:10px;">
             <span>@gameEngine.GameStatusForDisplay</span>
         </div>
 
         @if (gameEngine.GameBoard.GameStatus == Enums.GameStatus.Game_Over)
         {
-            <div style="font-size:14px; margin-bottom:12px;">
+            <div style="font-size: 28px; margin-bottom:10px;">
                 <span>@gameEngine.GameResultForDisplay</span>
             </div>
         }
 
-        <div style="font-size:13px; margin-bottom:25px;">
-            Player 1: <span>@gameEngine.GameBoard.Player1BoxesFilled</span> V
-            Player 2: <span>@gameEngine.GameBoard.Player2BoxesFilled</span>
+        <div style="font-size: 26px;margin-bottom:25px;">
+            @gameEngine.Player1NameForDisplay: <span>@gameEngine.GameBoard.Player1BoxesFilled</span> V
+            @gameEngine.Player2NameForDisplay: <span>@gameEngine.GameBoard.Player2BoxesFilled</span>
         </div>
 
         @for (int rowIndex = 0; rowIndex < gameEngine.GameBoard.Game.NumberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
@@ -73,7 +73,7 @@
                     <div class="dot" id="@DotID(x, y)"></div>
                     @if (colIndex < gameEngine.GameBoard.Game.NumberOfColumns - 1)
                     {
-                        <div class="horizContainer" data-coord="0,@x,@y" style="background-color: @gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y].GameColour" @onclick="@(() => LineClicked(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y]))" @onmouseover="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y], true))" @onmouseout="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y], false))"></div>
+                        <div class="horizContainer" data-coord="@gameEngine.HorizontalLineDirection,@x,@y" style="background-color: @gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y].GameColour" @onclick="@(() => LineClicked(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y]))" @onmouseover="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y], true))" @onmouseout="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y], false))"></div>
                     }
                 }
             </div>
@@ -84,7 +84,7 @@
                     {
                         int y = colIndex;
 
-                        <div class="vertContainer" data-coord="1,@x,@y" style="background-color: @gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y].GameColour" @onclick="@(() => LineClicked(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y]))" @onmouseover="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y], true))" @onmouseout="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y], false))"></div>
+                        <div class="vertContainer" data-coord="@gameEngine.VerticalLineDirection,@x,@y" style="background-color: @gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y].GameColour" @onclick="@(() => LineClicked(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y]))" @onmouseover="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y], true))" @onmouseout="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y], false))"></div>
                         @if (colIndex < gameEngine.GameBoard.Game.NumberOfColumns - 1)
                         {
                             <div class="box" id="@BoxID(gameEngine.GetBoxNumber(x, y), x, y)" style="background-color: @gameEngine.GetBoxColour(x, y)"></div>

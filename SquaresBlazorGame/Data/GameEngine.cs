@@ -12,6 +12,8 @@ namespace SquaresBlazorGame.Data
         public GameBoard GameBoard { get; set; }
         public string GameStatusForDisplay => GameBoard.GameStatus.ToString().Replace("_", " ");
         public string GameResultForDisplay => GameBoard.GameResult.ToString().Replace("_", " ");
+        public string Player1NameForDisplay => GameBoard.Player1Name.ToString().Replace("_", " ");
+        public string Player2NameForDisplay => GameBoard.Player2Name.ToString().Replace("_", " ");
         public int HorizontalLineDirection => (int)LineDirection.Horizontal;
         public int VerticalLineDirection => (int)LineDirection.Vertical;
         private Box GetBox(int rowIndex, int colIndex) => GameBoard.Boxes
@@ -53,13 +55,24 @@ namespace SquaresBlazorGame.Data
                 }
             }
 
-            GameBoard.CurrentPlayer = Player.Player1;
+            GameBoard.CurrentPlayer = Player.Player_1;
             GameBoard.GameStatus = GameStatus.In_Progress;
             GameBoard.BoxCompleted = false;
             GameBoard.ComputerBoxCompleted = false;
             GameBoard.Player1BoxesFilled = 0;
             GameBoard.Player2BoxesFilled = 0;
             GameBoard.Player2IsComputerPlayer = true;
+
+            if(GameBoard.Player2IsComputerPlayer)
+            {
+                GameBoard.Player1Name = Player.Player;
+                GameBoard.Player2Name = Player.Computer;
+            }
+            else
+            {
+                GameBoard.Player1Name = Player.Player_1;
+                GameBoard.Player2Name = Player.Player_2;
+            }
         }
 
         public async Task DrawLine(Line line)
@@ -79,7 +92,7 @@ namespace SquaresBlazorGame.Data
                 GameBoard.ComputerBoxCompleted = false;
             }
 
-            line.GameColour = GameBoard.CurrentPlayer == Player.Player1 ? GameColour.Red : GameColour.Blue;
+            line.GameColour = GameBoard.CurrentPlayer == Player.Player_1 ? GameColour.Red : GameColour.Blue;
             line.LineClicked = true;
 
             GameBoard.Lines[(int)line.LineDirection, line.RowIndex, line.ColIndex] = line;
@@ -106,10 +119,10 @@ namespace SquaresBlazorGame.Data
             
             if(!GameBoard.BoxCompleted)
             {
-                GameBoard.CurrentPlayer = GameBoard.CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
+                GameBoard.CurrentPlayer = GameBoard.CurrentPlayer == Player.Player_1 ? Player.Player_2 : Player.Player_1;
             }
 
-            if (GameBoard.Player2IsComputerPlayer && GameBoard.CurrentPlayer == Player.Player2)
+            if (GameBoard.Player2IsComputerPlayer && GameBoard.CurrentPlayer == Player.Player_2)
             {
                 await ComputerUserMove();
             }
@@ -289,7 +302,7 @@ namespace SquaresBlazorGame.Data
                     possibleBox.PlayerColour = line.GameColour;
                     GameBoard.BoxCompleted = true;
 
-                    if (GameBoard.CurrentPlayer == Player.Player1)
+                    if (GameBoard.CurrentPlayer == Player.Player_1)
                     {
                         GameBoard.Player1BoxesFilled++;
                     }
