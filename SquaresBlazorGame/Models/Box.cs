@@ -13,6 +13,8 @@ namespace SquaresBlazorGame.Models
         public bool BoxFilled { get; set; }
         public int RowIndex { get; set; }
         public int ColIndex { get; set; }
+        public int LinesDrawn { get; set; }
+        public Line LineToSelect { get; set; }
 
         public Box(int boxNumber, GameColour playerColour, int rowIndex, int colIndex)
         {

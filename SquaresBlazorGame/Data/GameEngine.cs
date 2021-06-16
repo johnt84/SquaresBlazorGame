@@ -1,47 +1,12 @@
-﻿using System;
+﻿using SquaresBlazorGame.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using static SquaresGamesTestConsoleApp.Enums;
+using static SquaresBlazorGame.Models.Enums;
 
-namespace SquaresGamesTestConsoleApp
+namespace SquaresBlazorGame.Data
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Run().Wait();
-
-            Console.WriteLine("\nPress any key to continue...");
-            Console.ReadLine();
-        }
-
-        static async Task Run()
-        {
-            var gameEngine = new GameEngine();
-
-            //var firstRow = gameBoard.Rows.First();
-
-            var firstBox = gameEngine.GameBoard.Boxes.First();
-
-            var line1 = new Line(LineDirection.Horizontal, GameColour.Red, 0, 0);
-
-            await gameEngine.DrawLine(line1);
-
-            var line2 = new Line(LineDirection.Horizontal, GameColour.Red, 0, 1);
-
-            await gameEngine.DrawLine(line2);
-
-            var line3 = new Line(LineDirection.Vertical, GameColour.Red, 0, 0);
-
-            await gameEngine.DrawLine(line3);
-
-            var line4 = new Line(LineDirection.Vertical, GameColour.Red, 0, 1);
-
-            await gameEngine.DrawLine(line4);
-        }
-    }
-
     public class GameEngine
     {
         public GameBoard GameBoard { get; set; }
@@ -77,7 +42,7 @@ namespace SquaresGamesTestConsoleApp
                     GameBoard.Lines[HorizontalLineDirection, rowIndex, colIndex] = new Line(LineDirection.Horizontal, GameColour.White, rowIndex, colIndex);
                     GameBoard.Lines[VerticalLineDirection, rowIndex, colIndex] = new Line(LineDirection.Vertical, GameColour.White, rowIndex, colIndex);
 
-                    if (rowIndex < GameBoard.Game.NumberOfRows - 1 && colIndex < GameBoard.Game.NumberOfColumns - 1)
+                    if(rowIndex < GameBoard.Game.NumberOfRows -1 && colIndex < GameBoard.Game.NumberOfColumns - 1)
                     {
                         var box = new Box(boxIndex, GameColour.White, rowIndex, colIndex);
 
@@ -91,6 +56,7 @@ namespace SquaresGamesTestConsoleApp
             GameBoard.CurrentPlayer = Player.Player1;
             GameBoard.GameStatus = GameStatus.In_Progress;
             GameBoard.BoxCompleted = false;
+            GameBoard.ComputerBoxCompleted = false;
             GameBoard.Player1BoxesFilled = 0;
             GameBoard.Player2BoxesFilled = 0;
             GameBoard.Player2IsComputerPlayer = true;
@@ -98,25 +64,25 @@ namespace SquaresGamesTestConsoleApp
 
         public async Task DrawLine(Line line)
         {
-            if (GameBoard.GameStatus == GameStatus.Game_Over || line.LineClicked)
+            if(GameBoard.GameStatus == GameStatus.Game_Over || line.LineClicked)
             {
                 return;
             }
 
-            if (GameBoard.BoxCompleted)
+            if(GameBoard.BoxCompleted)
             {
                 GameBoard.BoxCompleted = false;
+            }
+
+            if(GameBoard.ComputerBoxCompleted)
+            {
+                GameBoard.ComputerBoxCompleted = false;
             }
 
             line.GameColour = GameBoard.CurrentPlayer == Player.Player1 ? GameColour.Red : GameColour.Blue;
             line.LineClicked = true;
 
             GameBoard.Lines[(int)line.LineDirection, line.RowIndex, line.ColIndex] = line;
-
-            Console.WriteLine($"\n{GameBoard.CurrentPlayer}");
-            Console.WriteLine($"\n{line.LineDirection.ToString()}");
-            Console.WriteLine($"\n{line.RowIndex.ToString()}");
-            Console.WriteLine($"\n{line.ColIndex.ToString()}");
 
             var possibleBoxes = FindPossibleBoxesForLine(line);
 
@@ -129,7 +95,7 @@ namespace SquaresGamesTestConsoleApp
 
             bool gameComplete = GameBoard.Boxes.All(x => x.BoxFilled);
 
-            if (gameComplete)
+            if(gameComplete)
             {
                 GameBoard.GameStatus = GameStatus.Game_Over;
 
@@ -137,13 +103,13 @@ namespace SquaresGamesTestConsoleApp
 
                 return;
             }
-
-            if (!GameBoard.BoxCompleted)
+            
+            if(!GameBoard.BoxCompleted)
             {
                 GameBoard.CurrentPlayer = GameBoard.CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
             }
 
-            if (GameBoard.CurrentPlayer == Player.Player2)
+            if (GameBoard.Player2IsComputerPlayer && GameBoard.CurrentPlayer == Player.Player2)
             {
                 await ComputerUserMove();
             }
@@ -153,8 +119,8 @@ namespace SquaresGamesTestConsoleApp
         {
             var box = GetBox(rowIndex, colIndex);
 
-            return box != null
-                        ? box.PlayerColour.ToString()
+            return box != null 
+                        ? box.PlayerColour.ToString() 
                         : GameColour.White.ToString();
         }
 
@@ -169,8 +135,11 @@ namespace SquaresGamesTestConsoleApp
 
         private async Task ComputerUserMove()
         {
-            await Task.Delay(ComputerMoveTimeInMilliseconds);
-
+            if(!GameBoard.ComputerBoxCompleted)
+            {
+                await Task.Delay(ComputerMoveTimeInMilliseconds);
+            }
+            
             var computerLineToSelect = FindBestMoveForComputer();
 
             await DrawLine(computerLineToSelect);
@@ -178,76 +147,28 @@ namespace SquaresGamesTestConsoleApp
 
         private Line FindBestMoveForComputer()
         {
-            Line bestLineToSelect = null;
+            var availableLines = FindLinesNotYetSelected();
 
-            var availableLinesToSelect = FindLinesNotYetSelected();
+            var boxesCanBeCompleted = FindBoxesWhichCanBeCompleted(availableLines);
 
-            var boxesCanBeFilled = new List<Box>();
-
-            foreach (var line in availableLinesToSelect)
+            if(boxesCanBeCompleted.Count > 0)
             {
-                var possibleBoxesForLine = FindPossibleBoxesForLine(line);
-
-                var boxesCanBeFilledForLine = possibleBoxesForLine
-                                                .Where(x => x.LinesDrawn == Constants.LINES_IN_A_BOX - 1)
-                                                .ToList();
-
-                if(boxesCanBeFilledForLine.Count > 0)
-                {
-                    Console.WriteLine($"\nBoxes can be filled for line for computer count - {boxesCanBeFilledForLine.Count()}");
-
-                    boxesCanBeFilled.Union(boxesCanBeFilledForLine);
-
-                    boxesCanBeFilled.ForEach(x => x.LineToSelect = line);
-                }
-            }
-
-            if (boxesCanBeFilled.Count > 0)
-            {
-                Console.WriteLine("\nBoxes can be filled for the computer");
-                
-                var boxesCanBeFilledArr = boxesCanBeFilled.ToArray();
+                var boxesCanBeCompletedArr = boxesCanBeCompleted.ToArray();
 
                 var boxesToSelectRnd = new Random();
-                int boxesToSelectSelectedPostion = boxesToSelectRnd.Next(0, boxesCanBeFilled.Count);
+                int boxesToSelectSelectedPostion = boxesToSelectRnd.Next(0, boxesCanBeCompleted.Count);
 
-                var selectedBox = boxesCanBeFilledArr[boxesToSelectSelectedPostion];
+                var boxToComplete = boxesCanBeCompletedArr[boxesToSelectSelectedPostion];
 
-                return selectedBox.LineToSelect;
+                return boxToComplete.LineToSelect;
             }
 
-
-
-            var availableLinesToSelectArr = availableLinesToSelect.ToArray();
+            var availableLinesToSelectArr = availableLines.ToArray();
 
             var rnd = new Random();
-            int computerSelectionPostion = rnd.Next(0, availableLinesToSelect.Count);
+            int computerSelectionPostion = rnd.Next(0, availableLines.Count);
 
-            bestLineToSelect = availableLinesToSelectArr[computerSelectionPostion];
-
-
-            //var boxesCanComplete = GameBoard
-            //                        .Boxes
-            //                        .Where(x => x.LinesDrawn == Constants.LINES_IN_A_BOX - 1);
-
-            //if (boxesCanComplete.Count() > 0)
-            //{
-            //    if (boxesCanComplete.Count() > 1)
-            //    {
-
-            //    }
-            //    else
-            //    {
-            //        var box = boxesCanComplete.First();
-
-            //        if (box.TopLineClicked && box.LeftLineClicked && box.RightLineClicked)
-            //        {
-            //            bestLineToSelect = box.
-            //        }
-            //    }
-            //}
-
-            return bestLineToSelect;
+            return availableLinesToSelectArr[computerSelectionPostion];
         }
 
         private List<Line> FindLinesNotYetSelected()
@@ -256,9 +177,22 @@ namespace SquaresGamesTestConsoleApp
 
             for (int lineDirectionIndex = 0; lineDirectionIndex < GameBoard.Game.NumberOfLineDirections; lineDirectionIndex++)
             {
-                for (int rowIndex = 0; rowIndex < GameBoard.Game.NumberOfRows; rowIndex++)
+                int rowOffset = lineDirectionIndex == (int)LineDirection.Horizontal 
+                                                            ? 0 
+                                                            : 1;
+
+                int rowsWithOffset = GameBoard.Game.NumberOfRows - rowOffset;
+
+                int colOffset = lineDirectionIndex == (int)LineDirection.Horizontal
+                                                            ? 1
+                                                            : 0;
+
+                int colsWithOffset = GameBoard.Game.NumberOfColumns - colOffset;
+
+
+                for (int rowIndex = 0; rowIndex < rowsWithOffset; rowIndex++)
                 {
-                    for (int colIndex = 0; colIndex < GameBoard.Game.NumberOfColumns; colIndex++)
+                    for (int colIndex = 0; colIndex < colsWithOffset; colIndex++)
                     {
                         var currentLine = GameBoard.Lines[lineDirectionIndex, rowIndex, colIndex];
 
@@ -269,7 +203,7 @@ namespace SquaresGamesTestConsoleApp
                     }
                 }
             }
-
+                
             return linesNotSelected;
         }
 
@@ -362,6 +296,11 @@ namespace SquaresGamesTestConsoleApp
                     else
                     {
                         GameBoard.Player2BoxesFilled++;
+                        
+                        if(GameBoard.Player2IsComputerPlayer)
+                        {
+                            GameBoard.ComputerBoxCompleted = true;
+                        }
                     }
                 }
 
@@ -369,153 +308,44 @@ namespace SquaresGamesTestConsoleApp
                 GameBoard.Boxes[possibleBoxIndex] = possibleBox;
             }
         }
+        
+        private List<Box> FindBoxesWhichCanBeCompleted(List<Line> availableLines)
+        {
+            var boxesCanBeCompleted = new List<Box>();
+
+            foreach (var line in availableLines)
+            {
+                var possibleBoxesForLine = FindPossibleBoxesForLine(line);
+
+                var boxesCanBeCompletedForLine = possibleBoxesForLine
+                                                    .Where(x => x.LinesDrawn == Constants.LINES_IN_A_BOX - 1)
+                                                    .ToList();
+
+                if (boxesCanBeCompletedForLine.Count > 0)
+                {
+                    boxesCanBeCompleted.AddRange(boxesCanBeCompletedForLine);
+
+                    boxesCanBeCompleted.ForEach(x => x.LineToSelect = line);
+                }
+            }
+
+            return boxesCanBeCompleted;
+        }
 
         private void SetGameResult()
         {
             if (GameBoard.Player1BoxesFilled > GameBoard.Player2BoxesFilled)
             {
-                GameBoard.GameResult = Enums.GameResult.Player_1_Wins;
+                GameBoard.GameResult = GameResult.Player_1_Wins;
             }
             else if (GameBoard.Player2BoxesFilled > GameBoard.Player1BoxesFilled)
             {
-                GameBoard.GameResult = Enums.GameResult.Player_2_Wins;
+                GameBoard.GameResult = GameResult.Player_2_Wins;
             }
             else
             {
-                GameBoard.GameResult = Enums.GameResult.Draw;
+                GameBoard.GameResult = GameResult.Draw;
             }
         }
-    }
-    public class GameBoard
-    {
-        public Game Game { get; set; }
-        public bool Player2IsComputerPlayer { get; set; }
-        public Player CurrentPlayer { get; set; }
-        public Line[,,] Lines { get; set; }
-        public List<Box> Boxes { get; set; }
-        public Enums.GameStatus GameStatus { get; set; }
-        public int Player1BoxesFilled { get; set; }
-        public int Player2BoxesFilled { get; set; }
-        public GameResult GameResult { get; set; }
-        public bool BoxCompleted { get; set; }
-    }
-
-    public class Box
-    {
-        public int BoxNumber { get; set; }
-        public GameColour PlayerColour { get; set; }
-        public bool TopLineClicked { get; set; }
-        public bool LeftLineClicked { get; set; }
-        public bool BottomLineClicked { get; set; }
-        public bool RightLineClicked { get; set; }
-        public bool BoxFilled { get; set; }
-        public int RowIndex { get; set; }
-        public int ColIndex { get; set; }
-        public int LinesDrawn { get; set; }
-        public Line LineToSelect { get; set; }
-
-        public Box(int boxNumber, GameColour playerColour, int rowIndex, int colIndex)
-        {
-            BoxNumber = boxNumber;
-            PlayerColour = playerColour;
-            RowIndex = rowIndex;
-            ColIndex = colIndex;
-        }
-    }
-
-    public class Enums
-    {
-        public enum Shape
-        {
-            Dot,
-            Box,
-        }
-
-        public enum LineDirection
-        {
-            Horizontal,
-            Vertical,
-        }
-
-        public enum LineType
-        {
-            TopLine,
-            LeftLine,
-            BottomLine,
-            RightLine,
-        }
-
-        public enum PlayerColour
-        {
-            Red,
-            Blue,
-        }
-
-        public enum GameColour
-        {
-            Red,
-            Blue,
-            White,
-        }
-
-        public enum Player
-        {
-            Player1,
-            Player2,
-        }
-
-        public enum GameStatus
-        {
-            In_Progress,
-            Game_Over,
-        }
-
-        public enum GameResult
-        {
-            Player_1_Wins,
-            Player_2_Wins,
-            Draw,
-        }
-    }
-
-    public class Game
-    {
-        public int NumberOfLineDirections { get; } = 2;
-        public int NumberOfRows { get; set; }
-        public int NumberOfColumns { get; set; }
-
-        public Game(int numberOfRows, int numberOfColumns)
-        {
-            NumberOfRows = numberOfRows;
-            NumberOfColumns = numberOfColumns;
-        }
-    }
-
-    public class Line
-    {
-        public int LineNumber { get; set; }
-        public bool LineClicked { get; set; } = false;
-        public LineDirection LineDirection { get; set; }
-        public LineType LineType { get; set; }
-        public GameColour GameColour { get; set; }
-        public int BoxNumber { get; set; }
-        public int RowIndex { get; set; }
-        public int ColIndex { get; set; }
-
-        //public Line(int lineNumber, LineDirection lineDirection, GameColour gameColour)
-        public Line(LineDirection lineDirection, GameColour gameColour, int rowIndex, int colIndex) //, List<int> boxNumbersLineType lineType,
-        {
-            LineDirection = lineDirection;
-            //LineType = lineType;
-            GameColour = gameColour;
-            //BoxNumbers = boxNumbers;
-            RowIndex = rowIndex;
-            ColIndex = colIndex;
-        }
-    }
-
-    public class Constants
-    {
-        public const int LINES_IN_A_BOX = 4;
     }
 }

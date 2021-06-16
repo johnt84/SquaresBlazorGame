@@ -48,54 +48,54 @@
 <h3>Squares Game</h3>
 
 <div id="game-board">
-    @if (gameBoard != null)
+    @if (gameEngine.GameBoard != null)
     {
         <div style="font-size: 13px; width: 90px; height: 5px; margin-bottom: 35px;">
             <button id="btnNewGame" class="btnNewGame" @onclick="NewGame">New Game</button>
         </div>
 
         <div style="font-size:14px; margin-bottom:10px;">
-            <span>@gameBoard.GameStatusForDisplay</span>
+            <span>@gameEngine.GameStatusForDisplay</span>
         </div>
 
-        @if (gameBoard.GameStatus == Enums.GameStatus.Game_Over)
+        @if (gameEngine.GameBoard.GameStatus == Enums.GameStatus.Game_Over)
         {
-            <div style="font-size:14px; margin-bottom:25px;">
-                <span>@gameBoard.GameResultForDisplay</span>
+            <div style="font-size:14px; margin-bottom:12px;">
+                <span>@gameEngine.GameResultForDisplay</span>
             </div>
         }
 
         <div style="font-size:13px; margin-bottom:25px;">
-            Player 1: <span>@gameBoard.Player1BoxesFilled</span> V
-            Player 2: <span>@gameBoard.Player2BoxesFilled</span>
+            Player 1: <span>@gameEngine.GameBoard.Player1BoxesFilled</span> V
+            Player 2: <span>@gameEngine.GameBoard.Player2BoxesFilled</span>
         </div>
 
-        @for (int rowIndex = 0; rowIndex < gameBoard.Game.NumberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
+        @for (int rowIndex = 0; rowIndex < gameEngine.GameBoard.Game.NumberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ
         {
             int x = rowIndex;
             <div class="row">
-                @for (int colIndex = 0; colIndex < gameBoard.Game.NumberOfColumns; colIndex++)
+                @for (int colIndex = 0; colIndex < gameEngine.GameBoard.Game.NumberOfColumns; colIndex++)
                 {
                     int y = colIndex;
 
                     <div class="dot" id="@DotID(x, y)"></div>
-                    @if (colIndex < gameBoard.Game.NumberOfColumns - 1)
+                    @if (colIndex < gameEngine.GameBoard.Game.NumberOfColumns - 1)
                     {
-                        <div class="horizContainer" data-coord="0,@x,@y" style="background-color: @gameBoard.Lines[0, x, y].GameColour" @onclick="@(() => LineClicked(gameBoard.Lines[0, x, y]))" @onmouseover="@(() => LineMouseAction(gameBoard.Lines[0, x, y], true))" @onmouseout="@(() => LineMouseAction(gameBoard.Lines[0, x, y], false))"></div>
+                        <div class="horizContainer" data-coord="0,@x,@y" style="background-color: @gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y].GameColour" @onclick="@(() => LineClicked(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y]))" @onmouseover="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y], true))" @onmouseout="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.HorizontalLineDirection, x, y], false))"></div>
                     }
                 }
             </div>
-            @if (rowIndex < gameBoard.Game.NumberOfRows - 1)
+            @if (rowIndex < gameEngine.GameBoard.Game.NumberOfRows - 1)
             {
                 <div class="row">
-                    @for (int colIndex = 0; colIndex < gameBoard.Game.NumberOfColumns; colIndex++)
+                    @for (int colIndex = 0; colIndex < gameEngine.GameBoard.Game.NumberOfColumns; colIndex++)
                     {
                         int y = colIndex;
 
-                        <div class="vertContainer" data-coord="1,@x,@y" style="background-color: @gameBoard.Lines[1, x, y].GameColour" @onclick="@(() => LineClicked(gameBoard.Lines[1, x, y]))" @onmouseover="@(() => LineMouseAction(gameBoard.Lines[1, x, y], true))" @onmouseout="@(() => LineMouseAction(gameBoard.Lines[1, x, y], false))"></div>
-                        @if (colIndex < gameBoard.Game.NumberOfColumns - 1)
+                        <div class="vertContainer" data-coord="1,@x,@y" style="background-color: @gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y].GameColour" @onclick="@(() => LineClicked(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y]))" @onmouseover="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y], true))" @onmouseout="@(() => LineMouseAction(gameEngine.GameBoard.Lines[gameEngine.VerticalLineDirection, x, y], false))"></div>
+                        @if (colIndex < gameEngine.GameBoard.Game.NumberOfColumns - 1)
                         {
-                            <div class="box" id="@BoxID(gameBoard.GetBoxNumber(x, y), x, y)" style="background-color: @gameBoard.GetBoxColour(x, y)"></div>
+                            <div class="box" id="@BoxID(gameEngine.GetBoxNumber(x, y), x, y)" style="background-color: @gameEngine.GetBoxColour(x, y)"></div>
                         }
                     }
                 </div>
@@ -106,7 +106,7 @@
 
 @code {
 
-    private GameBoard gameBoard;
+    private GameEngine gameEngine;
 
     private string DotID(int rowIndex, int colIndex) => $"{Enums.Shape.Dot}{rowIndex},{colIndex}";
 
@@ -114,17 +114,17 @@
 
     protected override void OnInitialized()
     {
-        gameBoard = new GameBoard();
+        gameEngine = new GameEngine();
     }
 
-    private void LineClicked(Line line)
+    private async Task LineClicked(Line line)
     {
-        gameBoard.DrawLine(line);
+        await gameEngine.DrawLine(line);
     }
 
     private void LineMouseAction(Line line, bool mouseOver)
     {
-        if (gameBoard == null || gameBoard.GameComplete)
+        if (gameEngine.GameBoard == null || gameEngine.GameBoard.GameStatus == Enums.GameStatus.Game_Over)
         {
             return;
         }
@@ -139,6 +139,6 @@
 
     private void NewGame()
     {
-        gameBoard.ResetGame();
+        gameEngine.ResetGame();
     }
 }
