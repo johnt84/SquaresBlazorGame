@@ -3,63 +3,29 @@
 @using SquaresBlazorGame.Data;
 @using SquaresBlazorGame.Models;
 
-<style type="text/css">
-    .row {
-        display: flex;
-        margin-left: 15px;
-    }
-
-    .horizContainer {
-        height: 4px;
-        width: 90px;
-        border: 3px;
-    }
-
-    .vertContainer {
-        height: 90px;
-        width: 4px;
-        border: 2px;
-    }
-
-    .dot {
-        height: 4px;
-        width: 4px;
-        background-color: black;
-    }
-
-    .box {
-        height: 90px;
-        width: 90px;
-    }
-
-    div {
-        display: block;
-    }
-</style>
-
-<h1 style="padding-bottom: 17px;">Squares Game</h1>
+<h1>Squares Game</h1>
 
 <div id="game-board">
     @if (gameEngine.GameBoard != null)
     {
-        <div style="font-size: 18px; width: 103px; width: 110px; margin-bottom: 18px;">
+        <div class="newGame">
             <button id="btnNewGame" class="btnNewGame" @onclick="NewGame">New Game</button>
         </div>
 
-        <div style="font-size:28px; margin-bottom:10px;">
+        <div class="gameStatus">
             <span>@gameEngine.GameStatusForDisplay</span>
         </div>
 
         @if (gameEngine.GameBoard.GameStatus == Enums.GameStatus.Game_Over)
         {
-            <div style="font-size: 28px; margin-bottom:10px;">
+            <div class="gameCompleted" style="gameStatus">
                 <span>@gameEngine.GameResultForDisplay</span>
             </div>
         }
 
-        <div style="font-size: 26px;margin-bottom:25px;">
-            <span style="color:white; background-color:@gameEngine.Player1ColourForDisplay">@gameEngine.Player1NameForDisplay</span><span style="padding-left: 10px; padding-right:10px">@gameEngine.GameBoard.Player1BoxesFilled</span><span>-</span>
-            <span style="padding-right:10px; width: 76px;">@gameEngine.GameBoard.Player2BoxesFilled</span><span style="color: white; background-color: @gameEngine.Player2ColourForDisplay">@gameEngine.Player2NameForDisplay</span>
+        <div class="gameScore">
+            <span style="color:white; background-color:@gameEngine.Player1ColourForDisplay">@gameEngine.Player1NameForDisplay</span><span class="player1BoxScore">@gameEngine.GameBoard.Player1BoxesFilled</span><span>-</span>
+            <span class="player2BoxScore">@gameEngine.GameBoard.Player2BoxesFilled</span><span style="color: white; background-color: @gameEngine.Player2ColourForDisplay">@gameEngine.Player2NameForDisplay</span>
         </div>
 
         @for (int rowIndex = 0; rowIndex < gameEngine.GameBoard.Game.NumberOfRows; rowIndex++) //Taken from https://codepen.io/dbuzinski/pen/JZrZbJ

@@ -1,0 +1,62 @@
+﻿.row {
+    display: flex;
+    margin-left: 15px;
+}
+
+.horizContainer {
+    height: 4px;
+    width: 90px;
+    border: 3px;
+}
+
+.vertContainer {
+    height: 90px;
+    width: 4px;
+    border: 2px;
+}
+
+.dot {
+    height: 4px;
+    width: 4px;
+    background-color: black;
+}
+
+.box {
+    height: 90px;
+    width: 90px;
+}
+
+div {
+    display: block;
+}
+
+h1 {
+    padding-bottom: 17px;
+}
+
+.newGame {
+    font-size: 18px;
+    width: 103px;
+    width: 110px;
+    margin-bottom: 18px;
+}
+
+.gameStatus {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.gameScore {
+    font-size: 26px;
+    margin-bottom: 25px;
+}
+
+.player1BoxScore {
+    padding-left: 10px;
+    padding-right: 10px
+}
+
+.player2BoxScore {
+    padding-right: 10px;
+    width: 76px;
+}
